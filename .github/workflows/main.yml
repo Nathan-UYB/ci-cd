@@ -123,14 +123,7 @@ jobs:
           wget https://dl.grafana.com/oss/release/grafana-10.2.2.linux-amd64.tar.gz
           tar -zxvf grafana-10.2.2.linux-amd64.tar.gz
           mv grafana-v10.2.2 grafana
-
-      - name: Installation et configuration de MySQL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-server
-          sudo service mysql start
-          sudo mysql -e "CREATE DATABASE grafana; CREATE USER 'grafana'@'localhost' IDENTIFIED BY 'grafana'; GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'localhost'; FLUSH PRIVILEGES;"
-
+          
       - name: Configuration de Grafana pour MySQL
         run: |
           cp ./grafana/conf/defaults.ini ./grafana/conf/custom.ini
