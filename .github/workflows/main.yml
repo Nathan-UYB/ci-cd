@@ -123,18 +123,9 @@ jobs:
           wget https://dl.grafana.com/oss/release/grafana-10.2.2.linux-amd64.tar.gz
           tar -zxvf grafana-10.2.2.linux-amd64.tar.gz
           mv grafana-v10.2.2 grafana
-          
-      - name: Configuration de Grafana pour MySQL
-        run: |
-          cp ./grafana/conf/defaults.ini ./grafana/conf/custom.ini
-          sed -i 's/^type = sqlite3/type = mysql/' ./grafana/conf/custom.ini
-          sed -i 's/^host =.*/host = 127.0.0.1:3306/' ./grafana/conf/custom.ini
-          sed -i 's/^name = grafana/name = grafana/' ./grafana/conf/custom.ini
-          sed -i 's/^user = root/user = grafana/' ./grafana/conf/custom.ini
-          sed -i 's/^password =/password = grafana/' ./grafana/conf/custom.ini
 
       - name: Lancement de Grafana en arrière-plan (MySQL)
-        run: ./grafana/bin/grafana-server --homepath ./grafana --config ./grafana/conf/custom.ini &
+        run: ./grafana/bin/grafana-server
 
       - name: Attente du démarrage de Grafana
         run: sleep 30
