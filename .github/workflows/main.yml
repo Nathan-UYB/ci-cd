@@ -129,7 +129,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mysql-server
           sudo service mysql start
-          mysql -u root -e "CREATE DATABASE grafana; CREATE USER 'grafana'@'localhost' IDENTIFIED BY 'grafana'; GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'localhost'; FLUSH PRIVILEGES;"
+          sudo mysql -e "CREATE DATABASE grafana; CREATE USER 'grafana'@'localhost' IDENTIFIED BY 'grafana'; GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'localhost'; FLUSH PRIVILEGES;"
 
       - name: Configuration de Grafana pour MySQL
         run: |
