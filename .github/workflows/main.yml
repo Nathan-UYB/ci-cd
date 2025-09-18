@@ -150,7 +150,7 @@ jobs:
             -d '{
               "name": "Prometheus",
               "type": "prometheus",
-              "url": "http://localhost:9090",
+              "url": "http://localhost:3001",
               "access": "proxy",
               "basicAuth": false
             }'

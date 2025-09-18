@@ -2,7 +2,7 @@ const express = require("express");
 const client = require("prom-client");
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 // ----- Prometheus metrics -----
 const collectDefaultMetrics = client.collectDefaultMetrics;
