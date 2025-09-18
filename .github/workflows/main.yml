@@ -122,7 +122,7 @@ jobs:
         run: |
           wget https://dl.grafana.com/oss/release/grafana-10.2.2.linux-amd64.tar.gz
           tar -zxvf grafana-10.2.2.linux-amd64.tar.gz
-          mv grafana-10.2.2 grafana
+          mv grafana-10.2.2.linux-amd64 grafana
 
       - name: Lancement de Grafana en arrière-plan
         run: ./grafana/bin/grafana-server --homepath ./grafana &
