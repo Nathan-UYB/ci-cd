@@ -28,22 +28,24 @@ jobs:
         run: sleep 5
 
       - name: Test de l'endpoint /hello
+        id: test_hello
         run: |
           response=$(curl -s http://localhost:3000/hello)
           if [ "$response" = "Hello World!" ]; then
-            echo "✅ Test de l'endpoint /hello réussi."
+            echo "result=✅ Test de l'endpoint /hello réussi." >> $GITHUB_OUTPUT
           else
-            echo "❌ Test de l'endpoint /hello échoué."
+            echo "result=❌ Test de l'endpoint /hello échoué." >> $GITHUB_OUTPUT
             exit 1
           fi
 
       - name: Test de l'endpoint /metrics
+        id: test_metrics
         run: |
           response=$(curl -s http://localhost:3000/metrics)
           if [[ "$response" == *"hello_requests_total"* ]]; then
-            echo "✅ Test de l'endpoint /metrics réussi."
+            echo "result=✅ Test de l'endpoint /metrics réussi." >> $GITHUB_OUTPUT
           else
-            echo "❌ Test de l'endpoint /metrics échoué."
+            echo "result=❌ Test de l'endpoint /metrics échoué." >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -58,3 +60,10 @@ jobs:
         with:
           name: docker-image
           path: myapp.tar.gz
+
+      - name: Envoi du rapport sur Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          message="Rapport CI/CD :\n${{ steps.test_hello.outputs.result }}\n${{ steps.test_metrics.outputs.result }}"
+          curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$DISCORD_WEBHOOK"
