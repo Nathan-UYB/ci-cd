@@ -124,11 +124,27 @@ jobs:
           tar -zxvf grafana-10.2.2.linux-amd64.tar.gz
           mv grafana-v10.2.2 grafana
 
-      - name: Lancement de Grafana en arrière-plan
-        run: ./grafana/bin/grafana-server --homepath ./grafana &
+      - name: Installation et configuration de MySQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-server
+          sudo service mysql start
+          mysql -u root -e "CREATE DATABASE grafana; CREATE USER 'grafana'@'localhost' IDENTIFIED BY 'grafana'; GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'localhost'; FLUSH PRIVILEGES;"
+
+      - name: Configuration de Grafana pour MySQL
+        run: |
+          cp ./grafana/conf/defaults.ini ./grafana/conf/custom.ini
+          sed -i 's/^type = sqlite3/type = mysql/' ./grafana/conf/custom.ini
+          sed -i 's/^host =.*/host = 127.0.0.1:3306/' ./grafana/conf/custom.ini
+          sed -i 's/^name = grafana/name = grafana/' ./grafana/conf/custom.ini
+          sed -i 's/^user = root/user = grafana/' ./grafana/conf/custom.ini
+          sed -i 's/^password =/password = grafana/' ./grafana/conf/custom.ini
+
+      - name: Lancement de Grafana en arrière-plan (MySQL)
+        run: ./grafana/bin/grafana-server --homepath ./grafana --config ./grafana/conf/custom.ini &
 
       - name: Attente du démarrage de Grafana
-        run: sleep 10
+        run: sleep 30
 
       - name: Vérification du démarrage de Grafana
         run: |
@@ -137,6 +153,7 @@ jobs:
             echo "✅ Grafana est lancé sur http://localhost:3000."
           else
             echo "❌ Grafana n'est pas accessible."
+            cat ./grafana/data/log/grafana.log || true
             exit 1
           fi
 
