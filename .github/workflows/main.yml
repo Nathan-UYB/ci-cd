@@ -67,3 +67,110 @@ jobs:
         run: |
           message="Rapport CI/CD :\n${{ steps.test_hello.outputs.result }}\n${{ steps.test_metrics.outputs.result }}"
           curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$DISCORD_WEBHOOK"
+
+      - name: Téléchargement de Prometheus
+        run: |
+          wget https://github.com/prometheus/prometheus/releases/download/v2.49.1/prometheus-2.49.1.linux-amd64.tar.gz
+          tar xzf prometheus-2.49.1.linux-amd64.tar.gz
+          mv prometheus-2.49.1.linux-amd64 prometheus
+
+      - name: Génération du prometheus.yml
+        run: |
+          cat <<EOF > prometheus/prometheus.yml
+          global:
+            scrape_interval: 15s
+          scrape_configs:
+            - job_name: 'nodejs-app'
+              static_configs:
+                - targets: ['localhost:3000']
+          EOF
+
+      - name: Lancement de Prometheus en arrière-plan
+        run: ./prometheus/prometheus --config.file=./prometheus/prometheus.yml &
+
+      - name: Attente du démarrage de Prometheus
+        run: sleep 5
+
+      - name: Vérification du target Prometheus
+        run: |
+          status=$(curl -s http://localhost:9090/api/v1/targets | grep '"health":"up"')
+          if [ -n "$status" ]; then
+            echo "✅ Prometheus collecte les métriques Node.js."
+          else
+            echo "❌ Prometheus ne collecte pas les métriques Node.js."
+            exit 1
+          fi
+
+      - name: Téléchargement de Grafana
+        run: |
+          wget https://dl.grafana.com/oss/release/grafana-10.2.2.linux-amd64.tar.gz
+          tar -zxvf grafana-10.2.2.linux-amd64.tar.gz
+          mv grafana-10.2.2 grafana
+
+      - name: Lancement de Grafana en arrière-plan
+        run: ./grafana/bin/grafana-server --homepath ./grafana &
+
+      - name: Attente du démarrage de Grafana
+        run: sleep 10
+
+      - name: Vérification du démarrage de Grafana
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+          if [ "$status" = "200" ]; then
+            echo "✅ Grafana est lancé sur http://localhost:3000."
+          else
+            echo "❌ Grafana n'est pas accessible."
+            exit 1
+          fi
+
+      - name: Ajout de la source Prometheus dans Grafana
+        run: |
+          sleep 10 # Attendre que Grafana soit bien prêt
+          curl -X POST http://localhost:3000/api/datasources \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $(echo -n admin:admin | base64)" \
+            -d '{
+              "name": "Prometheus",
+              "type": "prometheus",
+              "url": "http://localhost:9090",
+              "access": "proxy",
+              "basicAuth": false
+            }'
+
+      - name: Création du dashboard Grafana
+        run: |
+          cat <<EOF > dashboard.json
+          {
+            "dashboard": {
+              "id": null,
+              "uid": null,
+              "title": "Node.js Monitoring",
+              "timezone": "browser",
+              "panels": [
+                {
+                  "type": "graph",
+                  "title": "Nombre total de requêtes /hello",
+                  "datasource": "Prometheus",
+                  "targets": [{"expr": "hello_requests_total"}],
+                  "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+                },
+                {
+                  "type": "graph",
+                  "title": "Latence moyenne (exemple)",
+                  "datasource": "Prometheus",
+                  "targets": [{"expr": "avg(http_request_duration_seconds_sum) / avg(http_request_duration_seconds_count)"}],
+                  "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+                }
+              ],
+              "schemaVersion": 16,
+              "version": 0
+            },
+            "overwrite": true
+          }
+          EOF
+          curl -X POST http://localhost:3000/api/dashboards/db \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Authorization: Basic $(echo -n admin:admin | base64)" \
+            -d @dashboard.json
