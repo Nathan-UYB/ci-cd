@@ -85,18 +85,35 @@ jobs:
                 - targets: ['localhost:3000']
           EOF
 
+      - name: Vérification du service Node.js avant Prometheus
+        run: |
+          for i in {1..10}; do
+            response=$(curl -s http://localhost:3000/metrics)
+            if [[ "$response" == *"hello_requests_total"* ]]; then
+              echo "✅ Service Node.js prêt pour Prometheus."
+              break
+            fi
+            sleep 2
+          done
+
       - name: Lancement de Prometheus en arrière-plan
         run: ./prometheus/prometheus --config.file=./prometheus/prometheus.yml &
 
       - name: Attente du démarrage de Prometheus
-        run: sleep 5
+        run: sleep 15
 
       - name: Vérification du target Prometheus
         run: |
+          for i in {1..10}; do
+            status=$(curl -s http://localhost:9090/api/v1/targets | grep '"health":"up"')
+            if [ -n "$status" ]; then
+              echo "✅ Prometheus collecte les métriques Node.js."
+              break
+            fi
+            sleep 2
+          done
           status=$(curl -s http://localhost:9090/api/v1/targets | grep '"health":"up"')
-          if [ -n "$status" ]; then
-            echo "✅ Prometheus collecte les métriques Node.js."
-          else
+          if [ -z "$status" ]; then
             echo "❌ Prometheus ne collecte pas les métriques Node.js."
             exit 1
           fi
