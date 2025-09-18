@@ -16,10 +16,10 @@ jobs:
       - name: Configuration de Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20' # Mise à jour de la version Node.js
+          node-version: '20'
 
       - name: Installation des dépendances
-        run: npm install # Installe toutes les dépendances du package.json
+        run: npm install
 
       - name: Démarrage du serveur en arrière-plan
         run: node server.js &
