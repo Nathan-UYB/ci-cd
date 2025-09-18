@@ -30,7 +30,7 @@ jobs:
       - name: Test de l'endpoint /hello
         id: test_hello
         run: |
-          response=$(curl -s http://localhost:3000/hello)
+          response=$(curl -s http://localhost:3001/hello)
           if [ "$response" = "Hello World!" ]; then
             echo "result=✅ Test de l'endpoint /hello réussi." >> $GITHUB_OUTPUT
           else
@@ -41,7 +41,7 @@ jobs:
       - name: Test de l'endpoint /metrics
         id: test_metrics
         run: |
-          response=$(curl -s http://localhost:3000/metrics)
+          response=$(curl -s http://localhost:3001/metrics)
           if [[ "$response" == *"hello_requests_total"* ]]; then
             echo "result=✅ Test de l'endpoint /metrics réussi." >> $GITHUB_OUTPUT
           else
@@ -82,13 +82,13 @@ jobs:
           scrape_configs:
             - job_name: 'nodejs-app'
               static_configs:
-                - targets: ['localhost:3000']
+                - targets: ['localhost:3001']
           EOF
 
       - name: Vérification du service Node.js avant Prometheus
         run: |
           for i in {1..10}; do
-            response=$(curl -s http://localhost:3000/metrics)
+            response=$(curl -s http://localhost:3001/metrics)
             if [[ "$response" == *"hello_requests_total"* ]]; then
               echo "✅ Service Node.js prêt pour Prometheus."
               break
