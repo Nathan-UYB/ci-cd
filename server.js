@@ -6,7 +6,7 @@ const port = 3000;
 
 // ----- Prometheus metrics -----
 const collectDefaultMetrics = client.collectDefaultMetrics;
-collectDefaultMetrics(); // CPU, mémoire, event loop..
+collectDefaultMetrics(); // CPU, mémoire, event loop...
 
 // Custom counter: count requests to /hello
 const helloCounter = new client.Counter({
